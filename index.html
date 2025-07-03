@@ -1,0 +1,175 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ARK ASA Calculator</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 20px; background: #f0f0f0; color: #222; }
+  h1 { text-align: center; color: #1b4d8e; }
+  label, select, input, button { display: block; width: 100%; margin: 10px 0; }
+  select, input { padding: 8px; font-size: 1rem; }
+  button { background: #1b4d8e; color: white; border: none; padding: 10px; cursor: pointer; }
+  button:hover { background: #14406b; }
+  .result { background: white; padding: 15px; margin-top: 20px; border-radius: 6px; white-space: pre-wrap; }
+  .container { max-width: 500px; margin: auto; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Calculadora ARK ASA</h1>
+
+  <label for="mode">Elige función:</label>
+  <select id="mode">
+    <option value="construir">Construcción</option>
+    <option value="demoler">Demolición</option>
+    <option value="tamear">Tameo</option>
+  </select>
+
+  <label for="item">Estructura / Criatura:</label>
+  <select id="item">
+    <!-- Opciones básicas de ejemplo -->
+    <optgroup label="Estructuras Tek">
+      <option value="puertaTek">Puerta Colosal Tek</option>
+      <option value="cemento">Cementing Paste (1 unidad)</option>
+    </optgroup>
+    <optgroup label="Criaturas">
+      <option value="rex">Rex</option>
+      <option value="tuso">Tuso</option>
+      <option value="achatina">Achatina</option>
+    </optgroup>
+  </select>
+
+  <label for="quantity">Cantidad / Nivel:</label>
+  <input type="number" id="quantity" min="1" value="1" />
+
+  <button id="calculateBtn">Calcular</button>
+
+  <div class="result" id="result"></div>
+</div>
+
+<script>
+  // Datos básicos y oficiales (puedes ampliar o actualizar)
+  const data = {
+    construir: {
+      puertaTek: {
+        materials: {
+          metal: 1080,
+          crystal: 420,
+          element: 240,
+          polymer: 280,
+          blackPearl: 120
+        },
+        weight: 20
+      },
+      cemento: {
+        materials: {
+          chitin: 4,
+          stone: 8
+        },
+        weight: 0.1
+      }
+    },
+    demoler: {
+      // Devuelve 100% de materiales al demoler
+      puertaTek: {
+        metal: 1080,
+        crystal: 420,
+        element: 240,
+        polymer: 280,
+        blackPearl: 120
+      }
+    },
+    tamear: {
+      rex: {
+        food: { primeMeat: 30, narcotics: 15 },
+        torpor: 1200,
+        tameTimeMin: 45
+      },
+      tuso: {
+        food: { meat: 40, narcotics: 20 },
+        torpor: 800,
+        tameTimeMin: 30
+      },
+      achatina: {
+        food: { berries: 80, narcotics: 0 },
+        torpor: 200,
+        tameTimeMin: 10
+      }
+    },
+    dedicadasCapacity: 180000
+  };
+
+  function calculate() {
+    const mode = document.getElementById('mode').value;
+    const item = document.getElementById('item').value;
+    const quantity = parseInt(document.getElementById('quantity').value);
+    const resultDiv = document.getElementById('result');
+
+    if (quantity < 1) {
+      resultDiv.textContent = "Cantidad/Nivel debe ser mayor o igual a 1.";
+      return;
+    }
+
+    if (mode === 'construir') {
+      const mat = data.construir[item];
+      if (!mat) {
+        resultDiv.textContent = "Estructura no encontrada.";
+        return;
+      }
+      let text = `Materiales para construir ${quantity} unidad(es) de ${item}:
+
+`;
+      for (const [k,v] of Object.entries(mat.materials)) {
+        text += `- ${k}: ${v * quantity}
+`;
+      }
+      text += `
+Peso total aproximado: ${(mat.weight * quantity).toFixed(2)} unidades.`;
+      resultDiv.textContent = text;
+    } 
+    else if (mode === 'demoler') {
+      const mat = data.demoler[item];
+      if (!mat) {
+        resultDiv.textContent = "Estructura no encontrada o no demolible.";
+        return;
+      }
+      let text = `Materiales recuperados al demoler ${quantity} unidad(es) de ${item}:
+
+`;
+      for (const [k,v] of Object.entries(mat)) {
+        const total = v * quantity;
+        const cajas = (total / data.dedicadasCapacity).toFixed(2);
+        text += `- ${k}: ${total} (${cajas} cajas dedicadas)
+`;
+      }
+      resultDiv.textContent = text;
+    }
+    else if (mode === 'tamear') {
+      const tame = data.tamear[item];
+      if (!tame) {
+        resultDiv.textContent = "Criatura no encontrada.";
+        return;
+      }
+      let text = `Requisitos para tamear nivel ${quantity} de ${item}:
+
+`;
+      for (const [k,v] of Object.entries(tame.food)) {
+        text += `- ${k}: ${v * quantity}
+`;
+      }
+      text += `- Narcóticos: ${tame.narcotics ? tame.narcotics * quantity : 0}
+`;
+      text += `- Torpor estimado: ${tame.torpor} segundos
+`;
+      text += `- Tiempo de tameo aproximado: ${tame.tameTimeMin} minutos
+`;
+      resultDiv.textContent = text;
+    }
+  }
+
+  document.getElementById('calculateBtn').addEventListener('click', calculate);
+</script>
+</body>
+</html>
