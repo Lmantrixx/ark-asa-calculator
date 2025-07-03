@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Calculadora ARK ASA PvP</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 20px; background: #f7f7f7; color: #222; }
+  header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+  h1 { color: #1b4d8e; }
+  select, button, input[type=number] { padding: 8px; margin: 5px 0; font-size: 1rem; width: 100%; box-sizing: border-box; }
+  .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+  .section { margin-top: 20px; }
+  label { font-weight: bold; display: block; margin-top: 15px; }
+  button { background-color: #1b4d8e; color: white; border: none; cursor: pointer; border-radius: 4px; }
+  button:hover { background-color: #14406b; }
+  .result { margin-top: 15px; white-space: pre-wrap; background: #eef2f7; padding: 15px; border-radius: 6px; min-height: 80px; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>Calculadora ARK ASA PvP</h1>
+  </header>
+
+  <div class="container">
+    <div class="section" id="section-mode">
+      <label for="mode">Selecciona sección:</label>
+      <select id="mode">
+        <option value="craft">Crafteos</option>
+        <option value="tame">Tameos</option>
+        <option value="demolish">Demoler</option>
+      </select>
+    </div>
+
+    <div class="section" id="section-craft">
+      <label for="craft-item">Selecciona estructura o equipo:</label>
+      <select id="craft-item">
+        <optgroup label="Smithy">
+          <option value="metal_sword">Espada metálica</option>
+          <option value="fabricated_pistol">Pistola fabricada</option>
+        </optgroup>
+        <optgroup label="Fabricator">
+          <option value="tek_rifle">Rifle Tek</option>
+          <option value="tek_shield">Escudo Tek</option>
+        </optgroup>
+      </select>
+
+      <label for="craft-quantity">Cantidad:</label>
+      <input type="number" id="craft-quantity" min="1" value="1" />
+
+      <button id="craft-calc-btn">Calcular materiales</button>
+      <div class="result" id="craft-result"></div>
+    </div>
+
+    <div class="section" id="section-tame" style="display:none;">
+      <label for="tame-creature">Selecciona criatura:</label>
+      <select id="tame-creature">
+        <option value="rex">Rex</option>
+        <option value="tuso">Tuso</option>
+        <option value="achatina">Achatina</option>
+      </select>
+
+      <label for="tame-level">Nivel de la criatura:</label>
+      <input type="number" id="tame-level" min="1" max="150" value="1" />
+
+      <button id="tame-calc-btn">Calcular comida y narcóticos</button>
+      <div class="result" id="tame-result"></div>
+    </div>
+
+    <div class="section" id="section-demolish" style="display:none;">
+      <label for="demolish-structure">Selecciona estructura a demoler:</label>
+      <select id="demolish-structure">
+        <option value="tek_door">Puerta Tek</option>
+        <option value="tek_replicator">Tek Replicator</option>
+        <option value="tek_shield">Escudo Tek</option>
+      </select>
+
+      <label for="demolish-qty">Cantidad a demoler:</label>
+      <input type="number" id="demolish-qty" min="1" value="1" />
+
+      <button id="demolish-calc-btn">Calcular recursos recuperados</button>
+      <div class="result" id="demolish-result"></div>
+    </div>
+  </div>
+
+<script>
+  const crafts = {
+    metal_sword: { metal: 50, wood: 20, hide: 10 },
+    fabricated_pistol: { metal: 70, crystal: 15, polymer: 10 },
+    tek_rifle: { element: 80, metal: 100, crystal: 50 },
+    tek_shield: { element: 40, metal: 60, crystal: 30 }
+  };
+
+  const tames = {
+    rex: { food: { prime_meat: 30, narcotics: 15 }, base_time: 45 },
+    tuso: { food: { meat: 40, narcotics: 20 }, base_time: 30 },
+    achatina: { food: { berries: 80, narcotics: 0 }, base_time: 10 }
+  };
+
+  const structures = {
+    tek_door: { metal: 240, polymer: 40, element: 20 },
+    tek_replicator: { metal: 5000, polymer: 600, crystal: 800, black_pearl: 100, element: 100 },
+    tek_shield: { metal: 600, polymer: 100, crystal: 80, element: 60 }
+  };
+
+  const stack_sizes = {
+    metal: 300, polymer: 100, crystal: 100, black_pearl: 100
+  };
+
+  document.getElementById('mode').addEventListener('change', (e) => {
+    const mode = e.target.value;
+    document.getElementById('section-craft').style.display = (mode === 'craft') ? 'block' : 'none';
+    document.getElementById('section-tame').style.display = (mode === 'tame') ? 'block' : 'none';
+    document.getElementById('section-demolish').style.display = (mode === 'demolish') ? 'block' : 'none';
+  });
+
+  document.getElementById('craft-calc-btn').addEventListener('click', () => {
+    const item = document.getElementById('craft-item').value;
+    const qty = parseInt(document.getElementById('craft-quantity').value) || 1;
+    const materials = crafts[item];
+    if (!materials) {
+      document.getElementById('craft-result').textContent = 'Item no encontrado.';
+      return;
+    }
+    let result = `🔧 Materiales para ${qty} ${item.replace('_', ' ')}:\n\n`;
+    for (const [mat, val] of Object.entries(materials)) {
+      result += `- ${mat}: ${val * qty}\n`;
+    }
+    document.getElementById('craft-result').textContent = result;
+  });
+
+  document.getElementById('tame-calc-btn').addEventListener('click', () => {
+    const creature = document.getElementById('tame-creature').value;
+    const level = parseInt(document.getElementById('tame-level').value) || 1;
+    const tameData = tames[creature];
+    if (!tameData) {
+      document.getElementById('tame-result').textContent = 'Criatura no encontrada.';
+      return;
+    }
+    let result = `🦖 Tamear ${creature} nivel ${level}:\n\n`;
+    for (const [food, qty] of Object.entries(tameData.food)) {
+      result += `- ${food.replace('_', ' ')}: ${qty * level}\n`;
+    }
+    result += `- Tiempo base: ${tameData.base_time} minutos\n`;
+    document.getElementById('tame-result').textContent = result;
+  });
+
+  document.getElementById('demolish-calc-btn').addEventListener('click', () => {
+    const structure = document.getElementById('demolish-structure').value;
+    const qty = parseInt(document.getElementById('demolish-qty').value) || 1;
+    const item = structures[structure];
+    if (!item) return;
+
+    let result = `🔨 Recursos por demoler ${qty} ${structure.replace('_',' ')}:\n\n`;
+    for (const [mat, val] of Object.entries(item)) {
+      if (mat === 'element') continue;
+      const total = Math.floor(val * qty * 0.5);
+      const stacks = Math.ceil(total / stack_sizes[mat]);
+      const dedicated = Math.ceil(stacks / 180);
+      result += `- ${mat}: ${total} (≈ ${dedicated} caja${dedicated > 1 ? 's' : ''} dedicadas)\n`;
+    }
+    document.getElementById('demolish-result').textContent = result;
+  });
+</script>
+</body>
+</html>
